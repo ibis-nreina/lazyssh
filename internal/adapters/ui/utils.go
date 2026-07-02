@@ -93,8 +93,17 @@ func formatServerLine(s domain.Server) (primary, secondary string) {
 	if isFwd {
 		fCol = "[#A0FFA0]" + fCol + "[-]"
 	}
-	// Use a consistent color for alias; host/IP fixed width; then forwarding column
-	primary = fmt.Sprintf("%s [white::b]%-12s[-] [#AAAAAA]%-18s[-] %s [#888888]Last SSH: %s[-]  %s", icon, s.Alias, s.Host, fCol, humanizeDuration(s.LastSeen), renderTagBadgesForList(s.Tags))
+	// herdr column: servers flagged to connect via `herdr --remote`
+	hGlyph := ""
+	if s.Herdr {
+		hGlyph = "⚡"
+	}
+	hCol := cellPad(hGlyph, 2)
+	if s.Herdr {
+		hCol = "[#53FFFF]" + hCol + "[-]"
+	}
+	// Use a consistent color for alias; host/IP fixed width; then forwarding and herdr columns
+	primary = fmt.Sprintf("%s [white::b]%-12s[-] [#AAAAAA]%-18s[-] %s%s [#888888]Last SSH: %s[-]  %s", icon, s.Alias, s.Host, fCol, hCol, humanizeDuration(s.LastSeen), renderTagBadgesForList(s.Tags))
 	secondary = ""
 	return
 }

@@ -30,6 +30,7 @@ type ServerMetadata struct {
 	LastSeen string   `json:"last_seen,omitempty"`
 	PinnedAt string   `json:"pinned_at,omitempty"`
 	SSHCount int      `json:"ssh_count,omitempty"`
+	Herdr    bool     `json:"herdr,omitempty"`
 }
 
 type metadataManager struct {
@@ -116,6 +117,8 @@ func (m *metadataManager) updateServer(server domain.Server, oldAlias string) er
 		merged.SSHCount = server.SSHCount
 	}
 
+	merged.Herdr = server.Herdr
+
 	metadata[server.Alias] = merged
 	return m.saveAll(metadata)
 }
@@ -144,6 +147,20 @@ func (m *metadataManager) setPinned(alias string, pinned bool) error {
 	} else {
 		meta.PinnedAt = ""
 	}
+
+	metadata[alias] = meta
+	return m.saveAll(metadata)
+}
+
+func (m *metadataManager) setHerdr(alias string, herdr bool) error {
+	metadata, err := m.loadAll()
+	if err != nil {
+		m.logger.Errorw("failed to load metadata in setHerdr", "path", m.filePath, "alias", alias, "herdr", herdr, "error", err)
+		return fmt.Errorf("load metadata: %w", err)
+	}
+
+	meta := metadata[alias]
+	meta.Herdr = herdr
 
 	metadata[alias] = meta
 	return m.saveAll(metadata)

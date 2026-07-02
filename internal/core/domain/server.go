@@ -27,6 +27,9 @@ type Server struct {
 	LastSeen      time.Time
 	PinnedAt      time.Time
 	SSHCount      int
+	// Herdr marks this server to be connected via `herdr --remote <alias>`
+	// instead of plain ssh. Stored in lazyssh metadata, not in ssh config.
+	Herdr bool
 
 	// Additional SSH config fields
 	// Connection and proxy settings

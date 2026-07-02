@@ -53,15 +53,21 @@ func main() {
 
 	serverRepo := ssh_config_file.NewRepository(log, sshConfigFile, metaDataFile)
 	serverService := services.NewServerService(log, serverRepo)
-	tui := ui.NewTUI(log, serverService, version, gitCommit)
 
+	var query string
 	rootCmd := &cobra.Command{
-		Use:   ui.AppName,
+		Use:   ui.AppName + " [query]",
 		Short: "Lazy SSH server picker TUI",
+		Args:  cobra.MaximumNArgs(1),
 		RunE: func(cmd *cobra.Command, args []string) error {
+			if query == "" && len(args) > 0 {
+				query = args[0]
+			}
+			tui := ui.NewTUI(log, serverService, version, gitCommit, query)
 			return tui.Run()
 		},
 	}
+	rootCmd.Flags().StringVarP(&query, "query", "q", "", "start with the server list filtered by this query (alias, host, user, or tag)")
 	rootCmd.SilenceUsage = true
 
 	if err := rootCmd.Execute(); err != nil {

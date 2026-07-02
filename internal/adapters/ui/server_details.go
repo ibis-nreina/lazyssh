@@ -68,6 +68,11 @@ func (sd *ServerDetails) UpdateServer(server domain.Server) {
 	if server.PinnedAt.IsZero() {
 		pinnedStr = "false"
 	}
+
+	connectStr := "ssh"
+	if server.Herdr {
+		connectStr = "herdr --remote"
+	}
 	tagsText := renderTagChips(server.Tags)
 
 	// Basic information
@@ -83,9 +88,9 @@ func (sd *ServerDetails) UpdateServer(server domain.Server) {
 	}
 
 	text := fmt.Sprintf(
-		"[::b]%s[-]\n\n[::b]Basic Settings:[-]\n  Host: [white]%s[-]\n  User: [white]%s[-]\n  Port: [white]%s[-]\n  Key:  [white]%s[-]\n  Tags: %s\n  Pinned: [white]%s[-]\n  Last SSH: %s\n  SSH Count: [white]%d[-]\n",
+		"[::b]%s[-]\n\n[::b]Basic Settings:[-]\n  Host: [white]%s[-]\n  User: [white]%s[-]\n  Port: [white]%s[-]\n  Key:  [white]%s[-]\n  Tags: %s\n  Pinned: [white]%s[-]\n  Connect: [white]%s[-]\n  Last SSH: %s\n  SSH Count: [white]%d[-]\n",
 		aliasText, hostText, userText, portText,
-		serverKey, tagsText, pinnedStr,
+		serverKey, tagsText, pinnedStr, connectStr,
 		lastSeen, server.SSHCount)
 
 	// Advanced settings section (only show non-empty fields)
@@ -213,7 +218,7 @@ func (sd *ServerDetails) UpdateServer(server domain.Server) {
 	}
 
 	// Commands list
-	text += "\n[::b]Commands:[-]\n  Enter: SSH connect\n  f: Port forward\n  x: Stop forwarding\n  c: Copy SSH command\n  g: Ping server\n  r: Refresh list\n  a: Add new server\n  e: Edit entry\n  t: Edit tags\n  d: Delete entry\n  p: Pin/Unpin"
+	text += "\n[::b]Commands:[-]\n  Enter: SSH connect\n  f: Port forward\n  x: Stop forwarding\n  c: Copy SSH command\n  g: Ping server\n  r: Refresh list\n  a: Add new server\n  e: Edit entry\n  t: Edit tags\n  d: Delete entry\n  p: Pin/Unpin\n  H: Toggle herdr connect"
 
 	sd.TextView.SetText(text)
 }

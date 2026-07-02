@@ -160,6 +160,11 @@ func (r *Repository) SetPinned(alias string, pinned bool) error {
 	return r.metadataManager.setPinned(alias, pinned)
 }
 
+// SetHerdr sets or unsets the herdr connect flag of a server.
+func (r *Repository) SetHerdr(alias string, herdr bool) error {
+	return r.metadataManager.setHerdr(alias, herdr)
+}
+
 // RecordSSH increments the SSH access count and updates the last seen timestamp for a server.
 func (r *Repository) RecordSSH(alias string) error {
 	return r.metadataManager.recordSSH(alias)
