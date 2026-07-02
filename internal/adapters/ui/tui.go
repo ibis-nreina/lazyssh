@@ -46,15 +46,18 @@ type tui struct {
 	content *tview.Flex
 
 	sortMode SortMode
+
+	initialQuery string
 }
 
-func NewTUI(logger *zap.SugaredLogger, ss ports.ServerService, version, commit string) App {
+func NewTUI(logger *zap.SugaredLogger, ss ports.ServerService, version, commit, initialQuery string) App {
 	return &tui{
 		logger:        logger,
 		app:           tview.NewApplication(),
 		serverService: ss,
 		version:       version,
 		commit:        commit,
+		initialQuery:  initialQuery,
 	}
 }
 
@@ -132,7 +135,11 @@ func (t *tui) bindEvents() *tui {
 }
 
 func (t *tui) loadInitialData() *tui {
-	servers, _ := t.serverService.ListServers("")
+	if t.initialQuery != "" {
+		// Pre-fill the search bar so the user sees (and can edit) the active filter.
+		t.searchBar.SetText(t.initialQuery)
+	}
+	servers, _ := t.serverService.ListServers(t.initialQuery)
 	sortServersForUI(servers, t.sortMode)
 	t.updateListTitle()
 	t.serverList.UpdateServers(servers)
