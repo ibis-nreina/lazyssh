@@ -153,6 +153,46 @@ func (s *serverService) SetPinned(alias string, pinned bool) error {
 	return err
 }
 
+// SetHerdr sets or clears the herdr connect flag for the server alias.
+func (s *serverService) SetHerdr(alias string, herdr bool) error {
+	err := s.serverRepository.SetHerdr(alias, herdr)
+	if err != nil {
+		s.logger.Errorw("failed to set herdr state", "error", err, "alias", alias, "herdr", herdr)
+	}
+	return err
+}
+
+// SSHHerdr attaches to the remote herdr session for the given alias using
+// `herdr --remote <alias>`. The alias is resolved through the user's ssh config,
+// so host, user, port, and identity settings apply as with plain ssh.
+// Falls back to plain ssh when the herdr binary is not available.
+func (s *serverService) SSHHerdr(alias string) error {
+	herdrBin, err := exec.LookPath("herdr")
+	if err != nil {
+		s.logger.Warnw("herdr binary not found in PATH, falling back to ssh", "alias", alias)
+		fmt.Fprintln(os.Stderr, "lazyssh: herdr not found in PATH, falling back to plain ssh")
+		return s.SSH(alias)
+	}
+
+	s.logger.Infow("herdr remote start", "alias", alias)
+	// #nosec G204
+	cmd := exec.Command(herdrBin, "--remote", alias)
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	if err := cmd.Run(); err != nil {
+		s.logger.Errorw("herdr remote command failed", "alias", alias, "error", err)
+		return err
+	}
+
+	if err := s.serverRepository.RecordSSH(alias); err != nil {
+		s.logger.Errorw("failed to record ssh metadata", "alias", alias, "error", err)
+	}
+
+	s.logger.Infow("herdr remote end", "alias", alias)
+	return nil
+}
+
 // SSH starts an interactive SSH session to the given alias using the system's ssh client.
 func (s *serverService) SSH(alias string) error {
 	s.logger.Infow("ssh start", "alias", alias)

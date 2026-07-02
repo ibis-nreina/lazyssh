@@ -26,7 +26,9 @@ type ServerService interface {
 	AddServer(server domain.Server) error
 	DeleteServer(server domain.Server) error
 	SetPinned(alias string, pinned bool) error
+	SetHerdr(alias string, herdr bool) error
 	SSH(alias string) error
+	SSHHerdr(alias string) error
 	SSHWithArgs(alias string, extraArgs []string) error
 	StartForward(alias string, extraArgs []string) (int, error)
 	StopForwarding(alias string) error

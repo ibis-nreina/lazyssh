@@ -1072,6 +1072,7 @@ func (sf *ServerForm) getDefaultValues() ServerFormData {
 			Port:                 fmt.Sprint(sf.original.Port),
 			Key:                  strings.Join(sf.original.IdentityFiles, ", "),
 			Tags:                 strings.Join(sf.original.Tags, ", "),
+			Herdr:                sf.original.Herdr,
 			ProxyJump:            sf.original.ProxyJump,
 			ProxyCommand:         sf.original.ProxyCommand,
 			RemoteCommand:        sf.original.RemoteCommand,
@@ -1253,6 +1254,9 @@ func (sf *ServerForm) createBasicForm() {
 
 	// Tags field
 	sf.addValidatedInputField(form, "Tags:", "Tags", defaultValues.Tags, 30, GetFieldPlaceholder("Tags"))
+
+	// Herdr toggle: connect with `herdr --remote <alias>` instead of plain ssh
+	form.AddCheckbox("Connect with herdr:", defaultValues.Herdr, nil)
 
 	// Add save and cancel buttons
 	form.AddButton("Save", sf.handleSaveButton)
@@ -1645,6 +1649,7 @@ type ServerFormData struct {
 	Port  string
 	Key   string
 	Tags  string
+	Herdr bool
 
 	// Connection and proxy settings
 	ProxyJump            string
@@ -1773,6 +1778,21 @@ func (sf *ServerForm) getFormData() ServerFormData {
 		return ""
 	}
 
+	// Helper function to get checked state from Checkbox across all forms
+	getCheckboxValue := func(fieldName string) bool {
+		for _, form := range sf.forms {
+			for i := 0; i < form.GetFormItemCount(); i++ {
+				if checkbox, ok := form.GetFormItem(i).(*tview.Checkbox); ok {
+					cleanLabel := stripColorTags(strings.TrimSpace(checkbox.GetLabel()))
+					if strings.HasPrefix(cleanLabel, fieldName) {
+						return checkbox.IsChecked()
+					}
+				}
+			}
+		}
+		return false
+	}
+
 	return ServerFormData{
 		Alias: getFieldText("Alias:"),
 		Host:  getFieldText("Host/IP:"),
@@ -1780,6 +1800,7 @@ func (sf *ServerForm) getFormData() ServerFormData {
 		Port:  getFieldText("Port:"),
 		Key:   getFieldText("Keys:"),
 		Tags:  getFieldText("Tags:"),
+		Herdr: getCheckboxValue("Connect with herdr"),
 		// Connection and proxy settings
 		ProxyJump:            getFieldText("ProxyJump:"),
 		ProxyCommand:         getFieldText("ProxyCommand:"),
@@ -2188,6 +2209,7 @@ func (sf *ServerForm) dataToServer(data ServerFormData) domain.Server {
 		Port:                 port,
 		IdentityFiles:        keys,
 		Tags:                 tags,
+		Herdr:                data.Herdr,
 		ProxyJump:            data.ProxyJump,
 		ProxyCommand:         data.ProxyCommand,
 		RemoteCommand:        data.RemoteCommand,

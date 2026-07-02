@@ -62,6 +62,9 @@ func (t *tui) handleGlobalKeys(event *tcell.EventKey) *tcell.EventKey {
 	case 'p':
 		t.handleServerPin()
 		return nil
+	case 'H':
+		t.handleServerHerdrToggle()
+		return nil
 	case 's':
 		t.handleSortToggle()
 		return nil
@@ -114,6 +117,19 @@ func (t *tui) handleServerPin() {
 	}
 }
 
+func (t *tui) handleServerHerdrToggle() {
+	if server, ok := t.serverList.GetSelectedServer(); ok {
+		herdr := !server.Herdr
+		_ = t.serverService.SetHerdr(server.Alias, herdr)
+		if herdr {
+			t.showStatusTemp("Herdr connect: ON — Enter runs `herdr --remote " + server.Alias + "`")
+		} else {
+			t.showStatusTemp("Herdr connect: OFF — Enter runs plain ssh")
+		}
+		t.refreshServerList()
+	}
+}
+
 func (t *tui) handleSortToggle() {
 	t.sortMode = t.sortMode.ToggleField()
 	t.showStatusTemp("Sort: " + t.sortMode.String())
@@ -131,6 +147,9 @@ func (t *tui) handleSortReverse() {
 func (t *tui) handleCopyCommand() {
 	if server, ok := t.serverList.GetSelectedServer(); ok {
 		cmd := BuildSSHCommand(server)
+		if server.Herdr {
+			cmd = "herdr --remote " + server.Alias
+		}
 		if err := clipboard.WriteAll(cmd); err == nil {
 			t.showStatusTemp("Copied: " + cmd)
 		} else {
@@ -224,7 +243,11 @@ func (t *tui) handleServerConnect() {
 	if server, ok := t.serverList.GetSelectedServer(); ok {
 
 		t.app.Suspend(func() {
-			_ = t.serverService.SSH(server.Alias)
+			if server.Herdr {
+				_ = t.serverService.SSHHerdr(server.Alias)
+			} else {
+				_ = t.serverService.SSH(server.Alias)
+			}
 		})
 		t.refreshServerList()
 	}
